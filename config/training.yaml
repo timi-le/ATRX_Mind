@@ -1,0 +1,162 @@
+# ATRX ML Training Configuration
+# ================================
+# 
+# This file defines default training parameters for all model types.
+# Following ATRX development standards for reproducible ML training.
+
+# Global training settings
+global:
+  seed: 42
+  early_stopping_patience: 10
+  validation_split: 0.2
+  test_mode: false  # Set to true for faster debugging
+  save_predictions: true
+  save_models: true
+  
+# LSTM model configuration
+lstm:
+  # Architecture
+  sequence_length: 64
+  lstm_units: [128, 64]  # Two LSTM layers
+  dropout_rate: 0.3
+  recurrent_dropout: 0.2
+  dense_units: [32, 16]  # Dense head layers
+  activation: 'tanh'
+  output_activation: 'softmax'
+  
+  # Training parameters
+  epochs: 100
+  batch_size: 256
+  learning_rate: 0.001
+  optimizer: 'adam'
+  loss: 'sparse_categorical_crossentropy'
+  metrics: ['accuracy', 'precision', 'recall']
+  
+  # Regularization
+  l1_reg: 0.0001
+  l2_reg: 0.0001
+  batch_normalization: true
+  
+  # Callbacks
+  reduce_lr_patience: 5
+  reduce_lr_factor: 0.5
+  min_lr: 0.00001
+
+# CNN model configuration  
+cnn:
+  # Architecture
+  sequence_length: 64
+  conv_filters: [64, 128, 64]  # 1D convolutional layers
+  kernel_sizes: [5, 3, 3]
+  pool_sizes: [2, 2, 2]
+  dropout_rate: 0.4
+  dense_units: [64, 32]  # Dense head layers
+  activation: 'relu'
+  output_activation: 'softmax'
+  
+  # Training parameters
+  epochs: 80
+  batch_size: 512
+  learning_rate: 0.002
+  optimizer: 'adam'
+  loss: 'sparse_categorical_crossentropy'
+  metrics: ['accuracy', 'precision', 'recall']
+  
+  # Regularization
+  l1_reg: 0.0001
+  l2_reg: 0.0001
+  batch_normalization: true
+  
+  # Callbacks
+  reduce_lr_patience: 4
+  reduce_lr_factor: 0.7
+  min_lr: 0.00001
+
+# XGBoost model configuration
+xgboost:
+  # Core parameters
+  objective: 'multi:softprob'
+  num_class: 3
+  eval_metric: ['mlogloss', 'merror']
+  
+  # Tree parameters
+  max_depth: 6
+  min_child_weight: 1
+  gamma: 0.1
+  subsample: 0.8
+  colsample_bytree: 0.8
+  colsample_bylevel: 0.8
+  
+  # Regularization
+  reg_alpha: 0.1
+  reg_lambda: 1.0
+  
+  # Training parameters
+  n_estimators: 1000
+  learning_rate: 0.1
+  early_stopping_rounds: 50
+  verbosity: 1
+  
+  # Advanced
+  scale_pos_weight: 1
+  max_delta_step: 0
+  tree_method: 'auto'
+  predictor: 'auto'
+
+# Feature engineering for models
+feature_engineering:
+  # Scaling
+  scale_features: true
+  scaler_type: 'standard'  # 'standard', 'minmax', 'robust'
+  
+  # Feature selection
+  feature_selection: false
+  max_features: null  # null for all features
+  feature_importance_threshold: 0.001
+  
+  # Target encoding
+  encode_labels: true  # Convert {-1, 0, 1} to {0, 1, 2}
+  class_weights: 'balanced'  # 'balanced', 'auto', or dict
+
+# Cross-validation settings
+cross_validation:
+  method: 'time_series'  # Use provided splits
+  shuffle: false  # Never shuffle time series data
+  stratify: false  # Don't stratify time series
+  
+# Output and logging
+output:
+  save_oof_predictions: true
+  save_fold_models: true
+  save_feature_importance: true
+  save_training_history: true
+  compression: 'gzip'  # For model serialization
+  
+# Metrics to track
+metrics:
+  classification:
+    - 'accuracy'
+    - 'precision_macro'
+    - 'recall_macro'
+    - 'f1_macro'
+    - 'roc_auc_ovr'
+    - 'log_loss'
+  
+  custom:
+    - 'directional_accuracy'  # Custom FX metric
+    - 'sharpe_ratio'  # Based on predictions
+    
+# Hardware optimization
+hardware:
+  use_gpu: true  # Auto-detect GPU availability
+  mixed_precision: true  # For TensorFlow models
+  cpu_threads: -1  # Use all available cores
+  memory_growth: true  # For GPU memory management
+
+# Development and debugging
+debug:
+  profile_training: false
+  save_intermediate_models: false
+  verbose_logging: true
+  plot_training_curves: true
+  validate_inputs: true

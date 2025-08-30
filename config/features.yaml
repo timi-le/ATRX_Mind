@@ -1,0 +1,249 @@
+# ATRX Feature Engineering Configuration
+# =====================================
+# Configuration for computing technical indicators and microstructure features
+# Used by core/features/compute_features.py
+
+# General Settings
+general:
+  # Input/Output directories
+  input_dir: "data/parquet"
+  output_dir: "data/features"
+  
+  # File patterns to process
+  input_pattern: "*.parquet"
+  output_suffix: "_features"
+  
+  # Processing options
+  force_overwrite: false
+  chunk_size: 50000  # Process in chunks for memory efficiency
+  
+  # Validation settings
+  min_required_rows: 100  # Minimum rows needed for feature computation
+  max_missing_ratio: 0.1  # Maximum allowed missing data ratio
+
+# Window Sizes for Rolling Computations
+windows:
+  short: 14    # Short-term window (RSI, ATR)
+  medium: 20   # Medium-term window (Bollinger Bands, Volatility)
+  long: 50     # Long-term window (Moving averages)
+  vol: 30      # Volatility of volatility window
+  
+  # Additional specialized windows
+  autocorr: 10     # Autocorrelation lookback
+  efficiency: 14   # Range efficiency window
+  spread_ma: 20    # Spread moving average window
+
+# Common Technical Indicators (Applied to all datasets)
+common_features:
+  # Returns and Volatility
+  returns:
+    - name: "log_ret_1"
+      description: "1-period log returns"
+      method: "log_return"
+      periods: 1
+      
+  volatility:
+    - name: "RV_w"
+      description: "Rolling realized volatility"
+      method: "realized_volatility" 
+      window: "medium"
+      
+    - name: "ATR_w"
+      description: "Average True Range"
+      method: "atr"
+      window: "short"
+      
+    - name: "VoV_wV"
+      description: "Volatility of volatility (std of log RV)"
+      method: "volatility_of_volatility"
+      rv_window: "medium"
+      vov_window: "vol"
+
+  # Momentum and Trend
+  momentum:
+    - name: "RSI_w"
+      description: "Relative Strength Index"
+      method: "rsi"
+      window: "short"
+      
+  # Bollinger Bands
+  bollinger:
+    - name: "bb_width"
+      description: "Bollinger band width (normalized)"
+      method: "bollinger_width"
+      window: "medium"
+      std_mult: 2.0
+      
+  # Statistical Features
+  statistics:
+    - name: "rolling_kurt"
+      description: "Rolling kurtosis of returns"
+      method: "rolling_kurtosis"
+      window: "medium"
+      
+    - name: "rolling_skew"
+      description: "Rolling skewness of returns" 
+      method: "rolling_skewness"
+      window: "medium"
+      
+    - name: "rolling_autocorr"
+      description: "Rolling autocorrelation of returns"
+      method: "rolling_autocorr"
+      window: "autocorr"
+      lag: 1
+      
+  # Normalization
+  normalization:
+    - name: "zscore_close"
+      description: "Z-score of closing prices"
+      method: "zscore"
+      window: "long"
+      column: "close"
+
+# Bid/Ask Microstructure Features (Applied only to bid/ask datasets)
+bidask_features:
+  # Spread Analysis
+  spread:
+    - name: "spread_close"
+      description: "Bid-ask spread at close (already computed in normalization)"
+      method: "existing"
+      
+    - name: "spread_ma_w"
+      description: "Moving average of spread"
+      method: "moving_average"
+      window: "spread_ma"
+      column: "spread_close"
+      
+    - name: "spread_vol"
+      description: "Rolling volatility of spread"
+      method: "rolling_std"
+      window: "medium"
+      column: "spread_close"
+      
+  # Mid-price Features
+  mid_price:
+    - name: "mid_ret_1"
+      description: "1-period mid-price returns"
+      method: "log_return"
+      periods: 1
+      column: "mid_close"
+      
+  # Market Microstructure
+  microstructure:
+    - name: "range_efficiency"
+      description: "Price range efficiency (close-to-close vs high-low range)"
+      method: "range_efficiency"
+      window: "efficiency"
+      
+    - name: "signed_spread_move"
+      description: "Signed spread movement relative to mid-price change"
+      method: "signed_spread_move"
+      
+    - name: "bid_ask_imbalance"
+      description: "Bid-ask volume/change imbalance"
+      method: "bid_ask_imbalance"
+      
+  # Advanced Microstructure
+  advanced:
+    - name: "effective_spread"
+      description: "Effective spread based on mid-price impact"
+      method: "effective_spread"
+      
+    - name: "quote_slope"
+      description: "Slope of bid/ask quotes"
+      method: "quote_slope"
+      window: 5
+
+# Feature Validation Rules
+validation:
+  # Outlier detection (values beyond these multiples of std will be capped)
+  outlier_threshold: 5.0
+  
+  # Feature-specific validation
+  feature_ranges:
+    RSI_w: [0, 100]       # RSI should be between 0-100
+    log_ret_1: [-0.1, 0.1]  # Log returns should be reasonable for FX
+    spread_close: [0, 0.01]  # Spreads should be positive and reasonable
+    
+  # Missing value handling
+  missing_value_strategy:
+    forward_fill_limit: 5   # Max consecutive forward fills
+    interpolation_methods: ["linear", "polynomial"]
+    drop_threshold: 0.5     # Drop features with >50% missing values
+
+# Performance Optimization
+performance:
+  # Parallel processing
+  n_jobs: -1  # Use all available cores
+  
+  # Memory management
+  low_memory_mode: true
+  dtype_optimization: true
+  
+  # Caching
+  cache_intermediate: false  # Set to true for debugging
+  cache_dir: "cache/features"
+
+# Logging Configuration
+logging:
+  level: "INFO"  # DEBUG, INFO, WARNING, ERROR
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  
+  # Feature computation logging
+  log_feature_stats: true
+  log_computation_time: true
+  log_memory_usage: false
+
+# Output Format Settings
+output:
+  # Parquet settings
+  compression: "snappy"
+  row_group_size: 50000
+  
+  # Metadata
+  include_feature_metadata: true
+  include_computation_timestamp: true
+  
+  # Data types
+  float_precision: "float32"  # Use float32 to save memory (float64 for high precision)
+  
+# Feature Selection (Optional - for reducing feature set)
+selection:
+  # Enable automatic feature selection
+  enable_selection: false
+  
+  # Selection methods
+  methods:
+    - "variance_threshold"   # Remove low-variance features
+    - "correlation_filter"   # Remove highly correlated features
+    
+  # Selection parameters
+  variance_threshold: 0.01
+  correlation_threshold: 0.95
+  
+# Schema Validation
+schema:
+  # Required columns for OHLC data
+  ohlc_required: ["timestamp", "symbol", "open", "high", "low", "close"]
+  
+  # Required columns for bid/ask data  
+  bidask_required: ["timestamp", "symbol", "bid_close", "ask_close", "mid_close"]
+  
+  # Output schema validation
+  validate_output_schema: true
+  
+# Debugging and Development
+debug:
+  # Enable debug mode for detailed logging
+  enable_debug: false
+  
+  # Save intermediate results
+  save_intermediate: false
+  intermediate_dir: "debug/features"
+  
+  # Profile performance
+  enable_profiling: false
+  
+  # Sample mode (process only subset for testing)
+  sample_mode: false
+  sample_size: 1000

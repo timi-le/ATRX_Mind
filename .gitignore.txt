@@ -1,0 +1,34 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Environment
+.env
+.venv
+env/
+venv/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# Jupyter
+.ipynb_checkpoints
+
+# Large data files (keep small samples)
+data/datasets/*.parquet
+!data/samples/*.parquet
+
+# Model artifacts (if >100MB)
+outputs/models/**/*.h5
+outputs/models/**/*.bin
+
+# Logs
+*.log
+
+# OS
+.DS_Store
+Thumbs.db

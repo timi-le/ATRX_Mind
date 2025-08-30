@@ -1,0 +1,85 @@
+[tool.poetry]
+name = "atrx-mind"
+version = "0.1.0"
+description = "ATRX Mind - ML Training System for Financial Time Series Prediction"
+authors = ["ATRX Team <team@atrx.ai>"]
+readme = "README.md"
+packages = [{include = "core"}, {include = "trainers"}]
+
+[tool.poetry.dependencies]
+python = ">=3.11,<3.13"
+
+# Data Processing & Analysis
+numpy = "^1.26.0"
+pandas = "^2.0.0"
+scipy = "^1.10.0"
+
+# Machine Learning & Deep Learning
+scikit-learn = "^1.3.0"
+torch = "^2.0.0"
+tensorflow = "^2.15.0"
+xgboost = "^3.0.2"
+lightgbm = "^4.1.0"
+onnx = "^1.14.0"
+onnxruntime = "^1.15.0"
+
+# Performance & Optimization
+numba = "^0.58.0"
+
+# Configuration & Environment
+pydantic = "^2.0.0"
+pyyaml = "^6.0.0"
+
+# Mathematical & Statistical
+statsmodels = "^0.14.0"
+
+# Logging
+structlog = "^23.0.0"
+loguru = "^0.7.0"
+
+# CLI & Development Tools
+typer = "^0.9.0"
+rich = "^13.7.0"
+
+[tool.poetry.group.dev.dependencies]
+# Testing & Quality
+pytest = "^7.4.0"
+pytest-asyncio = "^0.21.0"
+pytest-cov = "^4.1.0"
+pytest-benchmark = "^4.0.0"
+
+# Code Quality & Formatting
+black = "^23.0.0"
+flake8 = "^6.0.0"
+mypy = "^1.4.0"
+isort = "^5.12.0"
+
+# Development & Documentation
+jupyter = "^1.0.0"
+matplotlib = "^3.7.0"
+seaborn = "^0.12.0"
+plotly = "^5.15.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.black]
+line-length = 88
+target-version = ['py311']
+
+[tool.isort]
+profile = "black"
+multi_line_output = 3
+line_length = 88
+known_first_party = ["core", "trainers"]
+
+[tool.pytest.ini_options]
+minversion = "7.0"
+addopts = "-ra -q --strict-markers --strict-config"
+testpaths = ["tests"]
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "integration: marks tests as integration tests",
+    "unit: marks tests as unit tests",
+]
